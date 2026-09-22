@@ -118,13 +118,13 @@ async def public_category(update: Update, context: ContextTypes.DEFAULT_TYPE, ca
             [
                 InlineKeyboardButton(
                     "📞 Narxni bilish",
-                    url="tel:+998938374177"
+                    callback_data="manager""
                 )
             ],
             [
                 InlineKeyboardButton(
                     "📦 Buyurtma berish",
-                    url="tel:+998933364177"
+                   callback_data="manager"
                 )
             ]
         ])
