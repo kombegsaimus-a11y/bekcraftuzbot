@@ -118,7 +118,7 @@ async def public_category(update: Update, context: ContextTypes.DEFAULT_TYPE, ca
             [
                 InlineKeyboardButton(
                     "📞 Narxni bilish",
-                    callback_data="manager""
+                    callback_data="manager"
                 )
             ],
             [
