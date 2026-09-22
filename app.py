@@ -82,7 +82,7 @@ async def admin_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif action == "admin:toggle":
         if not products:
             await q.message.reply_text("Hozircha mahsulotlar yo'q.")
-            return
+            return# BekCraft product contact buttons
         buttons = [[InlineKeyboardButton(
             f"{'🟢' if p.get('active', True) else '⚪'} {p['name']}",
             callback_data=f"toggle:{p['id']}")] for p in products]
