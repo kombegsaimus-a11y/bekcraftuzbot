@@ -95,23 +95,51 @@ async def admin_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await q.message.reply_text("Qaysi mahsulotni o'chirasiz?", reply_markup=InlineKeyboardMarkup(buttons))
 
 async def public_category(update: Update, context: ContextTypes.DEFAULT_TYPE, category):
-    products = [p for p in load_products() if p.get("category")==category and p.get("active", True)]
+    products = [
+        p for p in load_products()
+        if p.get("category") == category and p.get("active", True)
+    ]
+
     if not products:
-        await update.callback_query.message.reply_text("Hozircha bu bo'limda mahsulot yo'q.")
+        await update.callback_query.message.reply_text(
+            "Hozircha bu bo'limda mahsulot yo'q."
+        )
         return
+
     for p in products:
-        caption = f"📌 {p['name']}\n\n{p.get('description','')}\n\n📞 Narx va batafsil ma'lumot uchun menejerga qo'ng'iroq qiling."
-        if p.get("telegram_file_id"):
-            await update.callback_query.message.reply_photo(p["telegram_file_id"], caption=caption)
-        else:
-            await update.callback_query.message.reply_text(caption)
-    await update.callback_query.message.reply_text(
-        "📞 Menejer bilan bog'lanish:",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("📞 +998 93 837 41 77", url="tel:+998938374177")],
-            [InlineKeyboardButton("📞 +998 93 336 41 77", url="tel:+998933364177")]
+        caption = (
+            f"📌 {p['name']}\n\n"
+            f"{p.get('description', '')}\n\n"
+            "💰 Narx: menejer orqali\n"
+            "📞 Batafsil ma'lumot uchun tugmalardan foydalaning."
+        )
+
+        buttons = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "📞 Narxni bilish",
+                    url="tel:+998938374177"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "📦 Buyurtma berish",
+                    url="tel:+998933364177"
+                )
+            ]
         ])
-    )
+
+        if p.get("telegram_file_id"):
+            await update.callback_query.message.reply_photo(
+                p["telegram_file_id"],
+                caption=caption,
+                reply_markup=buttons
+            )
+        else:
+            await update.callback_query.message.reply_text(
+                caption,
+                reply_markup=buttons
+            )
 
 async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
