@@ -236,19 +236,17 @@ async def webhook(request: Request):
     data = await request.json()
     await bot.process_update(Update.de_json(data, bot.bot))
     return {"ok": True}
-async def start_bot():
+@app.on_event("startup")
+async def startup():
     await bot.initialize()
-    await bot.bot.delete_webhook(drop_pending_updates=False)
-    await bot.updater.start_polling()
+    await bot.bot.set_webhook(f"{WEBHOOK_URL}/telegram/webhook")
     await bot.start()
 
 
-@app.on_event("startup")
-async def startup():
-    asyncio.create_task(start_bot())
-
-
 @app.on_event("shutdown")
+async def shutdown():
+    await bot.stop()
+    await bot.shutdown()
 async def shutdown():
     await bot.updater.stop()
     await bot.stop()
