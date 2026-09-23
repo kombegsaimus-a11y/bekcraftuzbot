@@ -236,17 +236,20 @@ async def webhook(request: Request):
     data = await request.json()
     await bot.process_update(Update.de_json(data, bot.bot))
     return {"ok": True}
-
 @app.on_event("startup")
 async def startup():
-    await bot.initialize(); await bot.start()
-    if WEBHOOK_URL:
-        await bot.bot.set_webhook(f"{WEBHOOK_URL}/telegram/webhook")
+    await bot.initialize()
+    await bot.bot.delete_webhook(drop_pending_updates=False)
+    await bot.start()
+    await bot.updater.start_polling()
+
 
 @app.on_event("shutdown")
 async def shutdown():
-    if WEBHOOK_URL: await bot.bot.delete_webhook()
-    await bot.stop(); await bot.shutdown()
+    await bot.updater.stop()
+    await bot.stop()
+    await bot.shutdown()
+
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=PORT)
