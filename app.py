@@ -167,7 +167,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     if q.data == "manager":
         await q.message.reply_text(
-            "📞 Menejerlar:\n+998 93 837 41 77\n+998 93 336 41 77"
+            "📞 Menejerlar:\n+998938374177\n+998933364177"
         )
 
 async def admin_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
