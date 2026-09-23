@@ -265,8 +265,8 @@ async def show_category(query, category):
 async def send_manager(query):
     await query.message.reply_text(
         "📞 Menejer bilan bog'lanish:\n\n"
-        "+998 93 837 41 77\n"
-        "+998 93 336 41 77"
+      "998938374177\n\n"
+"998933364177"
     )
 
 
