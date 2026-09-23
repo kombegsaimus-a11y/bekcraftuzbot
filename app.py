@@ -236,12 +236,16 @@ async def webhook(request: Request):
     data = await request.json()
     await bot.process_update(Update.de_json(data, bot.bot))
     return {"ok": True}
-@app.on_event("startup")
-async def startup():
+async def start_bot():
     await bot.initialize()
     await bot.bot.delete_webhook(drop_pending_updates=False)
-    await bot.start()
     await bot.updater.start_polling()
+    await bot.start()
+
+
+@app.on_event("startup")
+async def startup():
+    asyncio.create_task(start_bot())
 
 
 @app.on_event("shutdown")
