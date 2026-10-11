@@ -1,10 +1,13 @@
 import os
 import json
+import hmac
+import hashlib
 import logging
+import re
 from pathlib import Path
 
 import psycopg
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Header, Request
 from fastapi.responses import PlainTextResponse
 import uvicorn
 
@@ -31,6 +34,41 @@ ADMIN_IDS = {
 DATABASE_URL = os.environ["DATABASE_URL"]
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "").rstrip("/")
 PORT = int(os.environ.get("PORT", "10000"))
+WEBHOOK_SECRET_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,256}$")
+
+
+class WebhookSecretError(RuntimeError):
+    """WEBHOOK_SECRET yo'q yoki Telegram qoidasiga mos emas."""
+
+
+def require_webhook_secret(raw):
+    if raw is None or not str(raw).strip():
+        raise WebhookSecretError(
+            "WEBHOOK_SECRET topilmadi. Bot himoyasiz ishga tushmaydi. "
+            "1–256 belgidan iborat sir bering: faqat lotin harflari, raqamlar, _ va -."
+        )
+    secret = str(raw).strip()
+    if WEBHOOK_SECRET_PATTERN.fullmatch(secret) is None:
+        raise WebhookSecretError(
+            "WEBHOOK_SECRET yaroqsiz. Bot himoyasiz ishga tushmaydi. "
+            "Uzunlik 1–256 bo'lsin va faqat lotin harflari, raqamlar, _ yoki - ishlating."
+        )
+    return secret
+
+
+def webhook_secret_matches(provided):
+    if not isinstance(provided, str) or not provided:
+        return False
+    try:
+        given = provided.encode("utf-8")
+    except UnicodeError:
+        return False
+    expected_digest = hashlib.sha256(WEBHOOK_SECRET.encode("utf-8")).digest()
+    given_digest = hashlib.sha256(given).digest()
+    return hmac.compare_digest(expected_digest, given_digest)
+
+
+WEBHOOK_SECRET = require_webhook_secret(os.environ.get("WEBHOOK_SECRET"))
 
 ROOT = Path(__file__).parent
 LEGACY_JSON = ROOT / "products.json"
@@ -176,6 +214,18 @@ def is_admin(update):
     )
 
 
+def is_private_chat(update):
+    chat = update.effective_chat
+    return bool(chat and chat.type == "private")
+
+
+PRIVATE_ORDER_TEXT = (
+    "Buyurtma faqat bot bilan shaxsiy chatda qabul qilinadi.\n\n"
+    "Iltimos, shu botning shaxsiy chatini oching va buyurtmani o'sha yerda bering. "
+    "Guruhda ism, telefon va manzil so'ralmaydi."
+)
+
+
 def public_menu():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🪑 Bog' mebellari", callback_data="cat:garden")],
@@ -293,6 +343,10 @@ async def handle_order_text(update, context):
     step = context.user_data.get("order_step")
     if not order or not step:
         return False
+
+    if not is_private_chat(update):
+        await update.message.reply_text(PRIVATE_ORDER_TEXT)
+        return True
 
     text = update.message.text.strip()
 
@@ -456,6 +510,10 @@ async def callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if data.startswith("order:"):
+        if not is_private_chat(update):
+            if query.message is not None:
+                await query.message.reply_text(PRIVATE_ORDER_TEXT)
+            return
         product_id = int(data.split(":", 1)[1])
         await start_order(query, context, product_id)
         return
@@ -649,7 +707,12 @@ async def health():
 
 
 @app.post("/telegram/webhook")
-async def webhook(request: Request):
+async def webhook(
+    request: Request,
+    x_telegram_bot_api_secret_token: str | None = Header(default=None),
+):
+    if not webhook_secret_matches(x_telegram_bot_api_secret_token):
+        return PlainTextResponse("Forbidden", status_code=403)
     data = await request.json()
     update = Update.de_json(data, bot.bot)
     await bot.process_update(update)
@@ -662,7 +725,10 @@ async def startup():
     await bot.initialize()
 
     if WEBHOOK_URL:
-        await bot.bot.set_webhook(f"{WEBHOOK_URL}/telegram/webhook")
+        await bot.bot.set_webhook(
+            f"{WEBHOOK_URL}/telegram/webhook",
+            secret_token=WEBHOOK_SECRET,
+        )
 
     await bot.start()
     log.info("BekCraft bot started")
