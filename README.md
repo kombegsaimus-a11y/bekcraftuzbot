@@ -1,31 +1,41 @@
-# BekCraft Admin Catalog Bot
+# BekCraft bot (@Bekcraftuzbot)
 
-Telefon orqali Telegram ichidan katalogni boshqarish:
-- /admin
-- mahsulot qo'shish: nom -> kategoriya -> tavsif -> rasm
-- mahsulotlarni ko'rish
-- yashirish/ko'rsatish
-- o'chirish
+Bot va sayt bitta katalogdan foydalanadi. Ma'lumot faqat bekcraft.uz bazasida saqlanadi; bot saytga `BOT_API_KEY` bilan murojaat qiladi (`site_api.py`). Botda kiritilgan narsa darhol saytda chiqadi. Sayt admin paneli zaxira sifatida ishlayveradi.
 
-Mijozlar narx ko'rmaydi; ular rasmlarni ko'radi va menejerlarga qo'ng'iroq qiladi.
+## Mijoz uchun
+- Bo'lim → tur → model; rasmlar albom bo'lib chiqadi; narx (kiritilmagan bo'lsa — «Narx so'rov bo'yicha»).
+- Buyurtma: ism → telefon («📱 Raqamni yuborish» tugmasi) → izoh (ixtiyoriy). Buyurtma saytdagi «Murojaatlar»ga tushadi va saytning odatiy Telegram xabari yuboriladi.
+- Buyurtma faqat shaxsiy chatda qabul qilinadi; guruhda ism va telefon so'ralmaydi.
 
-Muhim: bu demo versiyada products.json lokal faylda. Render'da doimiy saqlash uchun keyingi bosqichda persistent database ulash kerak.
+## Admin uchun (/admin)
+Faqat `ADMIN_IDS` dagi Telegram ID lar. Har amal saytdagi «Tarix»ga `bot: Ism (ID)` deb yoziladi.
+- ➕ Model qo'shish: bo'lim → tur → nom → tavsif → narx → 1–10 rasm → tekshirish → saqlash.
+- 📋 Modellar: nom, tavsif, narxni o'zgartirish; rasmlarni ⬆️⬇️ surish, qo'shish, o'chirish (oxirgi rasm o'chmaydi); modelni o'chirish (tasdiq bilan).
+- 📦 Oxirgi buyurtmalar.
+
+Yangi bo'lim/tur, bosh sahifa rasmlari — hozircha sayt admin panelida (2-bosqich).
+
+## Render → bekcraftuzbot → Environment
+| Kalit | Nima |
+|---|---|
+| `TELEGRAM_BOT_TOKEN` | bot tokeni |
+| `ADMIN_IDS` | Telegram ID lar vergul bilan (ID ni @userinfobot → Start dan oling; chatga yozmang) |
+| `BOT_API_KEY` | saytdagi `BOT_API_KEY` bilan **bir xil** (kamida 32 belgi) |
+| `SITE_URL` | `https://bekcraft.uz` (bo'lmasa shu olinadi) |
+| `WEBHOOK_URL`, `WEBHOOK_SECRET` | avvalgidek |
+
+`DATABASE_URL` endi ishlatilmaydi. Eski bot bazasi (Neon: bekcraft-telegram-бот) tegilmagan.
 
 ## Webhook himoyasi
 
 `WEBHOOK_SECRET` majburiy. U yo'q yoki yaroqsiz bo'lsa, bot himoyasiz ishga tushmaydi.
 
-Qoidasi: 1–256 belgi, faqat lotin harflari (`A-Z`, `a-z`), raqamlar, `_` va `-`. Bo'sh joy yoki boshqa belgi yaroqsiz. Qiymatni Gitga, logga yoki shu faylga yozmang.
+Qoidasi: 1–256 belgi, faqat lotin harflari (`A-Z`, `a-z`), raqamlar, `_` va `-`. Qiymatni Gitga, logga yoki shu faylga yozmang.
 
-Ishga tushganda `set_webhook` shu sirni `secret_token` sifatida Telegramga beradi. Kelgan so'rovda `X-Telegram-Bot-Api-Secret-Token` sarlavhasi shu sir bilan solishtiriladi. Sarlavha yo'q yoki mos kelmasa, yangilanish qayta ishlanmaydi va javob `403` bo'ladi.
+Ishga tushganda `set_webhook` shu sirni `secret_token` sifatida Telegramga beradi. Kelgan so'rovda `X-Telegram-Bot-Api-Secret-Token` sarlavhasi shu sir bilan solishtiriladi; mos kelmasa — `403`.
 
-Buyurtma faqat shaxsiy chatda qabul qilinadi. Guruhdagi buyurtma tugmasi va matn qadamlari ism, telefon yoki manzil yig'maydi.
+## Bilish kerak
+- Render bepul tarifi: bot 15 daqiqa ishlatilmasa uxlaydi, birinchi javob 30–50 soniya kechikadi. Bot uxlab qolsa, yarim to'ldirilgan amal (masalan, yangi model) yo'qoladi — /admin dan qayta boshlanadi.
 
-### Renderda chiqarish tartibi
-
-1. Sirni o'zingiz yarating. Masalan, kompyuterda: `python -c "import secrets; print(secrets.token_urlsafe(32).replace('-', 'A').replace('_', 'B')[:48])"`. Chiqqan qiymatni saqlang, repozitoriyga qo'ymang.
-2. Render Dashboard → `bekcraftuzbot` → Environment. `WEBHOOK_SECRET` kalitini qo'shing va qiymatni shu yerga yozing. Saqlang.
-3. Shundan keyin yangi kodni chiqaring (Deploy). Jarayon ochilganda bot Telegram webhookini shu sir bilan yangilaydi.
-4. Agar kod avval chiqib, o'zgaruvchi hali yo'q bo'lsa, xizmat ataylab ishga tushmaydi. Avval o'zgaruvchini qo'ying, keyin qayta ishga tushiring yoki qayta deploy qiling.
-
-Eski kod yangi sarlavhani tekshirmaydi. Shuning uchun sirni Telegramga yuborish faqat shu yangi kod ishga tushgach bo'ladi.
+## Test
+`python -m unittest test_security -v`

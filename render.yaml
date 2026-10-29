@@ -6,12 +6,19 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python app.py
     envVars:
+      # Qiymatlarni shu faylga yozmang. Render Dashboard → Environment da beriladi.
       - key: TELEGRAM_BOT_TOKEN
         sync: false
-      - key: ADMIN_ID
+      # Telegram ID lar vergul bilan: Usta aka va o'g'li. (ADMIN_ID — eski nom, zaxira.)
+      - key: ADMIN_IDS
         sync: false
       - key: WEBHOOK_URL
         sync: false
-      # Qiymatni shu faylga yozmang. Render Dashboard → Environment da beriladi.
       - key: WEBHOOK_SECRET
+        sync: false
+      # Saytdagi BOT_API_KEY bilan bir xil qiymat.
+      - key: BOT_API_KEY
+        sync: false
+      # Bo'lmasa: https://bekcraft.uz
+      - key: SITE_URL
         sync: false
