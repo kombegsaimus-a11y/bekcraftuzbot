@@ -870,7 +870,18 @@ async def text_router(update, context):
         return
 
 
+async def on_error(update, context):
+    log.error("Bot xatosi", exc_info=context.error)
+    message = getattr(update, "effective_message", None) if isinstance(update, Update) else None
+    if message:
+        try:
+            await message.reply_text("Kutilmagan xato yuz berdi. /admin yoki /start dan qayta urinib ko'ring.")
+        except Exception:
+            pass
+
+
 bot = Application.builder().token(BOT_TOKEN).build()
+bot.add_error_handler(on_error)
 
 bot.add_handler(CommandHandler("start", start))
 bot.add_handler(CommandHandler("admin", admin_command))

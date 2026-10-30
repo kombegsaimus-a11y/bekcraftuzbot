@@ -295,6 +295,20 @@ class SiteApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(caught.exception.message, "Model topilmadi.")
         self.assertEqual(caught.exception.status, 404)
 
+    async def test_non_ascii_actor_is_encoded(self):
+        seen = []
+
+        def handler(request):
+            seen.append(request)
+            return httpx.Response(200, json={"ok": True})
+
+        api = app.SiteApi("https://site.test", "k" * 40, transport=httpx.MockTransport(handler))
+        await api.update_model("Машраб Oʻg‘il (1)", 5, price_som="100")
+        header = seen[0].headers["X-Bot-Actor"]
+        header.encode("ascii")
+        from urllib.parse import unquote
+        self.assertEqual(unquote(header), "Машраб Oʻg‘il (1)")
+
     async def test_network_error_is_friendly(self):
         def handler(request):
             raise httpx.ConnectError("down")

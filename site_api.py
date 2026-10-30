@@ -3,6 +3,8 @@
 Bot o'z bazasiga ega emas: katalog, rasmlar va buyurtmalar saytda saqlanadi.
 Har so'rov `Authorization: Bearer BOT_API_KEY` bilan yuboriladi.
 """
+from urllib.parse import quote
+
 import httpx
 
 # Sayt Render bepul tarifida uxlab qolgan bo'lsa, birinchi javob 30–50 soniya kechikadi.
@@ -34,7 +36,8 @@ class SiteApi:
     async def _request(self, method, path, actor=None, json=None, data=None, files=None, params=None):
         headers = {"Authorization": f"Bearer {self.api_key}"}
         if actor:
-            headers["X-Bot-Actor"] = actor
+            # HTTP sarlavhada faqat ASCII bo'ladi: kirill/o'zbekcha ism URL-kodlanadi, sayt qayta ochadi.
+            headers["X-Bot-Actor"] = quote(str(actor), safe=" ()")
         try:
             async with httpx.AsyncClient(
                 base_url=self.base_url + "/api/bot",
